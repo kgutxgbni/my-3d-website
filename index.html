@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER | Technical Elegance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#B85C3C",
+            surface: "#FAF6F0",
+            ink: "#161723",
+            muted: "#585a66"
+          },
+          fontFamily: {
+            headline: ["Space Grotesk", "sans-serif"],
+            body: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          },
+          boxShadow: {
+            panel: "0 10px 30px rgba(16, 24, 40, 0.06), 0 1px 0 rgba(92, 92, 193, 0.15)",
+            soft: "0 24px 60px rgba(22, 23, 35, 0.08)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg: #faf6f0;
+      --primary: #b85c3c;
+      --font-display: "Fraunces", serif;
+      --ink: #17181c;
+      --muted: #5f6272;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      cursor: none;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+
+    @media (max-width: 768px) {
+      body { cursor: auto; }
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    }
+
+    .custom-cursor {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(184, 92, 60, 0.78);
+      border-radius: 9999px;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s ease-out, background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    .custom-cursor::after {
+      content: "";
+      width: 4px;
+      height: 4px;
+      border-radius: 9999px;
+      background: #b85c3c;
+    }
+
+    #matrix-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0.88;
+    }
+
+    #flashlight-overlay {
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+      mask-image: radial-gradient(circle 150px at var(--mouse-x) var(--mouse-y), black 0%, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle 150px at var(--mouse-x) var(--mouse-y), black 0%, transparent 80%);
+      mix-blend-mode: overlay;
+    }
+
+    #flashlight-overlay::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle 2px at var(--mouse-x) var(--mouse-y), white 100%, transparent 100%),
+        radial-gradient(circle 120px at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.4) 0%, transparent 70%),
+        radial-gradient(circle 180px at var(--mouse-x) var(--mouse-y), transparent 80%, rgba(255, 255, 255, 0.1) 85%, transparent 90%);
+      filter: blur(1px);
+    }
+
+    .premium-shine {
+      position: relative;
+      display: inline-flex;
+      overflow: visible;
+      border-radius: 4px;
+    }
+
+    .premium-shine::after {
+      content: "";
+      position: absolute;
+      top: -200%;
+      left: -200%;
+      right: -200%;
+      bottom: -200%;
+      pointer-events: none;
+      z-index: 9999;
+      background: linear-gradient(
+        120deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 35%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(255, 255, 255, 0) 65%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      background-size: 300% 100%;
+      background-position: 200% 0;
+      animation: premium-shine-flow 2s ease-in-out infinite;
+      mix-blend-mode: soft-light;
+      opacity: 1;
+    }
+
+    .hero-wordmark-wrap {
+      width: 55%;
+      margin-left: 0;
+      margin-right: auto;
+      transform: translate(-25%, -25%);
+      text-align: left;
+      position: relative;
+    }
+
+    .glasses-3d-wrapper {
+      position: absolute;
+      right: -80px;
+      top: 55%;
+      transform: translateY(-50%);
+      width: 600px;
+      height: 500px;
+      pointer-events: auto;
+      z-index: 20;
+      background: transparent;
+      overflow: visible;
+    }
+
+    .glasses-3d-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: visible;
+    }
+
+    .glasses-3d-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      overflow: visible;
+    }
+
+    .glasses-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(250, 246, 240, 1);
+      z-index: 100;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Loader animation from Uiverse.io */
+    .loader {
+      position: relative;
+      width: 120px;
+      height: 90px;
+      margin: 0 auto;
+    }
+
+    .loader:before {
+      content: "";
+      position: absolute;
+      bottom: 30px;
+      left: 50px;
+      height: 30px;
+      width: 30px;
+      border-radius: 50%;
+      background: #b85c3c;
+      animation: loading-bounce 0.5s ease-in-out infinite alternate;
+    }
+
+    .loader:after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 7px;
+      width: 45px;
+      border-radius: 4px;
+      box-shadow: 0 5px 0 #d4c4b0, -35px 50px 0 #d4c4b0, -70px 95px 0 #d4c4b0;
+      animation: loading-step 1s ease-in-out infinite;
+    }
+
+    @keyframes loading-bounce {
+      0% { transform: scale(1, 0.7); }
+      40% { transform: scale(0.8, 1.2); }
+      60% { transform: scale(1, 1); }
+      100% { bottom: 140px; }
+    }
+
+    @keyframes loading-step {
+      0% {
+        box-shadow: 0 10px 0 rgba(0, 0, 0, 0),
+                0 10px 0 #d4c4b0,
+                -35px 50px 0 #d4c4b0,
+                -70px 90px 0 #d4c4b0;
+      }
+      100% {
+        box-shadow: 0 10px 0 #d4c4b0,
+                -35px 50px 0 #d4c4b0,
+                -70px 90px 0 #d4c4b0,
+                -70px 90px 0 rgba(0, 0, 0, 0);
+      }
+    }
+
+    .glasses-error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #b56a4b;
+      background: rgba(250, 246, 240, 0.9);
+      z-index: 5;
+      padding: 20px;
+      text-align: center;
+    }
+
+    @media (max-width: 1200px) {
+      .glasses-3d-wrapper {
+        width: 450px;
+        height: 400px;
+        right: -40px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .glasses-3d-wrapper {
+        width: 380px;
+        height: 350px;
+        right: -20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .glasses-3d-wrapper {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        right: auto;
+        top: auto;
+        transform: none;
+        margin-top: 2rem;
+      }
+      .hero-wordmark-wrap {
+        width: 100%;
+        transform: translate(0, 0);
+      }
+    }
+
+    .hero-wordmark {
+      font-family: var(--font-display, "Fraunces", serif);
+      font-weight: 300;
+      font-size: 320px;
+      line-height: 0.86;
+      letter-spacing: -0.03em;
+      color: #17110f;
+      white-space: nowrap;
+      font-variation-settings: "opsz" 144;
+      transform: scaleY(1.06);
+      transform-origin: left center;
+      margin: 0;
+    }
+
+    .hero-wordmark em {
+      font-style: italic;
+      color: #b56a4b;
+    }
+
+    .hero-wordmark-flash {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(
+        110deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 42%,
+        rgba(255, 255, 255, 0.9) 50%,
+        rgba(255, 255, 255, 0) 58%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      background-size: 260% 100%;
+      background-position: 150% 0;
+      mix-blend-mode: screen;
+      animation: hero-wordmark-shine 1.15s ease-out 0.25s 1 forwards;
+      opacity: 0;
+    }
+
+    .hero-italic-text {
+      font-style: italic;
+      font-size: 42px;
+      color: rgba(41, 32, 24, 0.9);
+      line-height: 1.22;
+      margin-top: 8px;
+      font-family: "Fraunces", serif;
+      text-align: left;
+    }
+
+    /* Chinese font style - applies to all text when body has chinese-font class */
+    body.chinese-font,
+    body.chinese-font * {
+      font-family: "Noto Serif SC", serif !important;
+    }
+
+    /* Preserve Aether. logo font - keep original styling */
+    body.chinese-font .hero-wordmark,
+    body.chinese-font .hero-wordmark * {
+      font-family: "Fraunces", serif !important;
+    }
+
+    /* Preserve monospace fonts for code elements */
+    body.chinese-font code,
+    body.chinese-font pre,
+    body.chinese-font .font-mono,
+    body.chinese-font [class*="mono"] {
+      font-family: "JetBrains Mono", monospace !important;
+    }
+
+    /* Initial state - hide hero elements until glasses arrive */
+    .hero-wordmark,
+    .hero-wordmark-flash,
+    .hero-italic-text {
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .hero-wordmark.visible,
+    .hero-wordmark-flash.visible,
+    .hero-italic-text.visible {
+      opacity: 1;
+    }
+
+    /* Feature item hover effects */
+    .feature-item {
+      transition: all 0.3s ease;
+    }
+
+    .feature-item:hover {
+      transform: translateY(-4px);
+    }
+
+    .feature-item:hover .feature-title {
+      font-weight: 700;
+      color: #B85C3C;
+      text-shadow: 0 0 20px rgba(184, 92, 60, 0.4);
+    }
+
+    .feature-item:hover .feature-desc {
+      color: #B85C3C;
+    }
+
+    .feature-item:hover span {
+      color: #B85C3C;
+      font-weight: 700;
+    }
+
+    /* Inactive feature items (when one is hovered) */
+    #feature-list:has(.feature-item:hover) .feature-item:not(:hover) {
+      opacity: 0.5;
+    }
+
+    /* Fullscreen loading overlay */
+    #fullscreen-loader {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    #fullscreen-loader.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .fullscreen-loader-content {
+      position: relative;
+      width: 120px;
+      height: 90px;
+    }
+
+    .fullscreen-loader-content:before {
+      content: "";
+      position: absolute;
+      bottom: 30px;
+      left: 50px;
+      height: 30px;
+      width: 30px;
+      border-radius: 50%;
+      background: #b85c3c;
+      animation: loading-bounce 0.5s ease-in-out infinite alternate;
+    }
+
+    .fullscreen-loader-content:after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 7px;
+      width: 45px;
+      border-radius: 4px;
+      box-shadow: 0 5px 0 #333, -35px 50px 0 #333, -70px 95px 0 #333;
+      animation: loading-step 1s ease-in-out infinite;
+    }
+
+    @keyframes loading-bounce {
+      0% { transform: scale(1, 0.7); }
+      40% { transform: scale(0.8, 1.2); }
+      60% { transform: scale(1, 1); }
+      100% { bottom: 140px; }
+    }
+
+    @keyframes loading-step {
+      0% {
+        box-shadow: 0 10px 0 rgba(0, 0, 0, 0),
+                0 10px 0 #333,
+                -35px 50px 0 #333,
+                -70px 90px 0 #333;
+      }
+      100% {
+        box-shadow: 0 10px 0 #333,
+                -35px 50px 0 #333,
+                -70px 90px 0 #333,
+                -70px 90px 0 rgba(0, 0, 0, 0);
+      }
+    }
+
+    @keyframes hero-wordmark-shine {
+      0% { background-position: 150% 0; opacity: 0; }
+      12% { opacity: 1; }
+      100% { background-position: -120% 0; opacity: 0; }
+    }
+
+    .lang-switcher-label {
+      font-style: italic;
+      font-size: 20px;
+      color: var(--ink);
+      margin-right: 12px;
+    }
+
+    .switch {
+      --input-focus: #F2D6B3;
+      --bg-color: #faf6f0;
+      --bg-color-alt: #666;
+      --main-color: #323232;
+      --input-out-of-focus: #ccc;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 70px;
+      height: 36px;
+    }
+
+    .toggle {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      box-sizing: border-box;
+      border-radius: 100px;
+      border: 2px solid var(--main-color);
+      box-shadow: 4px 4px var(--main-color);
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--input-out-of-focus);
+      transition: 0.3s;
+    }
+
+    .slider:before {
+      box-sizing: border-box;
+      height: 30px;
+      width: 30px;
+      position: absolute;
+      left: 2px;
+      bottom: 1px;
+      border: 2px solid var(--main-color);
+      border-radius: 100px;
+      background-color: var(--bg-color);
+      transition: 0.3s;
+      content: "";
+    }
+
+    .toggle:checked + .slider {
+      background-color: var(--input-focus);
+    }
+
+    .toggle:checked + .slider:before {
+      transform: translateX(32px);
+      background-color: var(--input-focus);
+    }
+    @keyframes premium-shine-flow {
+      0% { background-position: 200% 50%; }
+      100% { background-position: -100% 50%; }
+    }
+
+    #logo-flashlight-container {
+      transform-origin: center center;
+      will-change: transform, filter;
+      perspective: 1400px;
+    }
+
+    .logo-tilt-node {
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    #silhouette-mask {
+      margin: 0;
+      filter: none;
+      opacity: 1;
+      transform: none;
+      mix-blend-mode: normal;
+    }
+
+
+    .tech-card-container {
+      perspective: 1200px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .tracker-grid {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+    }
+
+    .tech-card {
+      position: relative;
+      transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 1s, filter 1s;
+      transform-style: preserve-3d;
+      opacity: 0;
+      filter: blur(10px);
+      animation: gentle-float 6s ease-in-out infinite alternate paused;
+    }
+
+    .tech-card::before,
+    .tech-card::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(184, 92, 60, 0.24);
+      z-index: -1;
+      transition: all 0.4s ease;
+      pointer-events: none;
+    }
+
+    .tech-card::before {
+      width: calc(100% + 18px);
+      height: calc(100% - 36px);
+      border-left-color: rgba(184, 92, 60, 0.52);
+      border-right-color: rgba(184, 92, 60, 0.52);
+    }
+
+    .tech-card::after {
+      width: calc(100% - 36px);
+      height: calc(100% + 18px);
+      border-top-color: rgba(148, 78, 56, 0.48);
+      border-bottom-color: rgba(148, 78, 56, 0.48);
+    }
+
+    .tech-card-container:hover .tech-card::before {
+      height: calc(100% + 18px);
+      border-color: rgba(184, 92, 60, 0.78);
+    }
+
+    .tech-card-container:hover .tech-card::after {
+      width: calc(100% + 18px);
+      border-color: rgba(140, 58, 38, 0.76);
+    }
+
+    .tr-1:hover ~ .tech-card { transform: rotateX(12deg) rotateY(-12deg); }
+    .tr-2:hover ~ .tech-card { transform: rotateX(12deg) rotateY(-6deg); }
+    .tr-3:hover ~ .tech-card { transform: rotateX(12deg) rotateY(0deg); }
+    .tr-4:hover ~ .tech-card { transform: rotateX(12deg) rotateY(6deg); }
+    .tr-5:hover ~ .tech-card { transform: rotateX(12deg) rotateY(12deg); }
+    .tr-6:hover ~ .tech-card { transform: rotateX(6deg) rotateY(-12deg); }
+    .tr-7:hover ~ .tech-card { transform: rotateX(6deg) rotateY(-6deg); }
+    .tr-8:hover ~ .tech-card { transform: rotateX(6deg) rotateY(0deg); }
+    .tr-9:hover ~ .tech-card { transform: rotateX(6deg) rotateY(6deg); }
+    .tr-10:hover ~ .tech-card { transform: rotateX(6deg) rotateY(12deg); }
+    .tr-11:hover ~ .tech-card { transform: rotateX(0deg) rotateY(-12deg); }
+    .tr-12:hover ~ .tech-card { transform: rotateX(0deg) rotateY(-6deg); }
+    .tr-13:hover ~ .tech-card { transform: rotateX(0deg) rotateY(0deg); }
+    .tr-14:hover ~ .tech-card { transform: rotateX(0deg) rotateY(6deg); }
+    .tr-15:hover ~ .tech-card { transform: rotateX(0deg) rotateY(12deg); }
+    .tr-16:hover ~ .tech-card { transform: rotateX(-6deg) rotateY(-12deg); }
+    .tr-17:hover ~ .tech-card { transform: rotateX(-6deg) rotateY(-6deg); }
+    .tr-18:hover ~ .tech-card { transform: rotateX(-6deg) rotateY(0deg); }
+    .tr-19:hover ~ .tech-card { transform: rotateX(-6deg) rotateY(6deg); }
+    .tr-20:hover ~ .tech-card { transform: rotateX(-6deg) rotateY(12deg); }
+    .tr-21:hover ~ .tech-card { transform: rotateX(-12deg) rotateY(-12deg); }
+    .tr-22:hover ~ .tech-card { transform: rotateX(-12deg) rotateY(-6deg); }
+    .tr-23:hover ~ .tech-card { transform: rotateX(-12deg) rotateY(0deg); }
+    .tr-24:hover ~ .tech-card { transform: rotateX(-12deg) rotateY(6deg); }
+    .tr-25:hover ~ .tech-card { transform: rotateX(-12deg) rotateY(12deg); }
+
+    .card-trail {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 40px;
+      background: linear-gradient(to top, transparent, rgba(184, 92, 60, 0.4), transparent);
+      filter: blur(15px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .animate-card-rise {
+      animation: riseBlur 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards, gentle-float 6s ease-in-out infinite alternate 1.2s;
+    }
+
+    .animate-card-rise .card-trail { animation: trailFade 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+
+    @keyframes gentle-float {
+      from { transform: translateY(0); }
+      to { transform: translateY(-12px); }
+    }
+    @keyframes riseBlur {
+      0% { opacity: 0; transform: translateY(160px) scaleY(1.1); filter: blur(15px); }
+      50% { opacity: 0.85; filter: blur(7px); }
+      100% { opacity: 1; transform: translateY(0) scaleY(1); filter: blur(0); }
+    }
+    @keyframes trailFade {
+      0% { opacity: 0; transform: translateX(-50%) translateY(50px) scaleX(0.5); }
+      20% { opacity: 0.8; }
+      80% { opacity: 0.2; }
+      100% { opacity: 0; transform: translateX(-50%) translateY(0) scaleX(1); }
+    }
+
+    #contact-btn {
+      position: relative;
+      width: 240px;
+      height: 40px;
+      border: 2px solid #b85c3c;
+      overflow: hidden;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.35s ease;
+    }
+    #contact-btn span {
+      position: relative;
+      z-index: 2;
+      font-family: "Fraunces", serif;
+      font-style: italic;
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      color: #b85c3c;
+    }
+    #progress-fill {
+      position: absolute;
+      inset: 0;
+      width: 0;
+      background: #f2d6b3;
+      transition: width 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+      box-shadow: 0 0 18px rgba(242, 214, 179, 0.65);
+      z-index: 1;
+    }
+    #contact-btn:hover #progress-fill { width: 100%; }
+    #contact-btn:hover { border-color: #000; }
+    #contact-btn:hover span { color: #000; }
+
+    #qr-popup {
+      display: none;
+      position: absolute;
+      right: 0;
+      left: auto;
+      top: calc(100% + 10px);
+      width: max-content;
+      max-width: min(90vw, 320px);
+      background: #fff;
+      border: 1px solid #e9e9ef;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 14px;
+      z-index: 80;
+      animation: popIn 0.26s ease-out forwards;
+    }
+    #qr-popup img {
+      width: 224px;
+      height: 224px;
+      max-width: none;
+      object-fit: contain;
+      display: block;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body class="text-ink">
+  <!-- Fullscreen loading overlay -->
+  <div id="fullscreen-loader">
+    <div class="fullscreen-loader-content"></div>
+  </div>
+
+  <canvas id="matrix-canvas"></canvas>
+  <div id="cursor" class="custom-cursor hidden md:flex"></div>
+
+  <nav class="fixed top-0 w-full z-[100] bg-[#faf6f0cc] backdrop-blur-xl">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <img alt="Aether Logo small" class="h-[65px] sm:h-[86px] w-auto premium-shine opacity-95 -translate-x-3" src="./assets/logo-nav-clover-brown.png" />
+      <div class="flex items-center gap-3">
+        <span class="lang-switcher-label" data-en="Language Switcher" data-zh="语言切换">Language Switcher</span>
+        <label class="switch">
+          <input type="checkbox" class="toggle" id="lang-toggle">
+          <span class="slider"></span>
+        </label>
+        <div class="relative" id="contact-btn-container">
+          <button id="contact-btn" class="active:scale-95">
+            <div id="progress-fill"></div>
+            <span data-en="CONTACT US" data-zh="联系我们">CONTACT US</span>
+          </button>
+          <div id="qr-popup">
+            <img alt="QR code" src="./assets/logo-mark.png" />
+            <p class="mt-2 text-center text-[10px] font-mono uppercase tracking-[0.2em] text-[#5f6272]" data-en="Scan to connect" data-zh="扫码连接">Scan to connect</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="relative z-10">
+    <section id="vision" class="relative min-h-[90vh] lg:min-h-[1024px] pt-24 flex items-center justify-center">
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
+        <div id="logo-flashlight-container" class="relative w-full max-w-[980px] pointer-events-auto">
+          <div id="logo-tilt-node" class="logo-tilt-node">
+            <div class="hero-wordmark-wrap">
+              <h1 id="silhouette-mask" class="hero-wordmark">Aeth<em>e</em>r.</h1>
+              <div class="hero-wordmark-flash"></div>
+              <div class="hero-italic-text">
+                <p data-en="Ambient presence." data-zh="环境式存在。">Ambient presence.</p>
+                <p data-en="Quiet intelligence." data-zh="静默式智能。">Quiet intelligence.</p>
+                <p data-en="Always with you." data-zh="永远与您相伴。">Always with you.</p>
+              </div>
+            </div>
+            <div class="glasses-3d-wrapper">
+              <div id="glasses-3d-container" class="glasses-3d-container">
+                <div class="glasses-loading">
+                  <div class="loader"></div>
+                </div>
+                <div class="glasses-error" id="glasses-error">Failed to load 3D model</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="specs" class="py-20 sm:py-28 lg:py-32">
+      <div class="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 space-y-14 sm:space-y-20">
+        <div class="w-full md:w-3/4 tech-card-container">
+          <div class="tracker-grid">
+            <div class="tr-1"></div><div class="tr-2"></div><div class="tr-3"></div><div class="tr-4"></div><div class="tr-5"></div>
+            <div class="tr-6"></div><div class="tr-7"></div><div class="tr-8"></div><div class="tr-9"></div><div class="tr-10"></div>
+            <div class="tr-11"></div><div class="tr-12"></div><div class="tr-13"></div><div class="tr-14"></div><div class="tr-15"></div>
+            <div class="tr-16"></div><div class="tr-17"></div><div class="tr-18"></div><div class="tr-19"></div><div class="tr-20"></div>
+            <div class="tr-21"></div><div class="tr-22"></div><div class="tr-23"></div><div class="tr-24"></div><div class="tr-25"></div>
+          </div>
+          <article class="tech-card min-h-[250px] sm:min-h-[290px] p-8 sm:p-12 border border-[rgba(184,92,60,0.38)] bg-[#faf6f099] backdrop-blur-md shadow-panel">
+            <div class="card-trail"></div>
+            <div>
+              <h3 class="font-['Fraunces'] text-[42px] font-bold tracking-tight leading-tight" data-en="Understood, not observed." data-zh="被理解，而非被观察。">Understood, not observed.</h3>
+            </div>
+            <p class="text-[20px] italic leading-[1.4] text-[#5f4b42] mt-4 font-['Fraunces']" data-en="The agent listens before it speaks. It earns memory, it doesn't demand it." data-zh="智能体先倾听，再表达。记忆需要被赢得，而不是被索取。">
+              The agent listens before it speaks. It earns memory, it doesn't demand it.
+            </p>
+          </article>
+        </div>
+
+        <div class="w-full md:w-3/4 md:ml-auto tech-card-container">
+          <div class="tracker-grid">
+            <div class="tr-1"></div><div class="tr-2"></div><div class="tr-3"></div><div class="tr-4"></div><div class="tr-5"></div>
+            <div class="tr-6"></div><div class="tr-7"></div><div class="tr-8"></div><div class="tr-9"></div><div class="tr-10"></div>
+            <div class="tr-11"></div><div class="tr-12"></div><div class="tr-13"></div><div class="tr-14"></div><div class="tr-15"></div>
+            <div class="tr-16"></div><div class="tr-17"></div><div class="tr-18"></div><div class="tr-19"></div><div class="tr-20"></div>
+            <div class="tr-21"></div><div class="tr-22"></div><div class="tr-23"></div><div class="tr-24"></div><div class="tr-25"></div>
+          </div>
+          <article class="tech-card min-h-[250px] sm:min-h-[290px] p-8 sm:p-12 border border-[rgba(184,92,60,0.38)] bg-[#faf6f099] backdrop-blur-md shadow-panel">
+            <div class="card-trail"></div>
+            <div>
+              <h3 class="font-['Fraunces'] text-[42px] font-bold tracking-tight leading-tight" data-en="Remembered, not tracked." data-zh="被记住，而非被追踪。">Remembered, not tracked.</h3>
+            </div>
+            <p class="text-[20px] italic leading-[1.4] text-[#5f4b42] mt-4 font-['Fraunces']" data-en="Three to five years of context feel like friendship, not surveillance." data-zh="三到五年的上下文更像友谊，而不是监控。">
+              Three to five years of context feel like friendship, not surveillance.
+            </p>
+          </article>
+        </div>
+
+        <div class="w-full md:w-3/4 md:mx-auto tech-card-container">
+          <div class="tracker-grid">
+            <div class="tr-1"></div><div class="tr-2"></div><div class="tr-3"></div><div class="tr-4"></div><div class="tr-5"></div>
+            <div class="tr-6"></div><div class="tr-7"></div><div class="tr-8"></div><div class="tr-9"></div><div class="tr-10"></div>
+            <div class="tr-11"></div><div class="tr-12"></div><div class="tr-13"></div><div class="tr-14"></div><div class="tr-15"></div>
+            <div class="tr-16"></div><div class="tr-17"></div><div class="tr-18"></div><div class="tr-19"></div><div class="tr-20"></div>
+            <div class="tr-21"></div><div class="tr-22"></div><div class="tr-23"></div><div class="tr-24"></div><div class="tr-25"></div>
+          </div>
+          <article class="tech-card min-h-[250px] sm:min-h-[290px] p-8 sm:p-12 border border-[rgba(184,92,60,0.38)] bg-[#faf6f099] backdrop-blur-md shadow-panel">
+            <div class="card-trail"></div>
+            <div>
+              <h3 class="font-['Fraunces'] text-[42px] font-bold tracking-tight leading-tight" data-en="Accompanied, not interrupted." data-zh="被陪伴，而非被打断。">Accompanied, not interrupted.</h3>
+            </div>
+            <p class="text-[20px] italic leading-[1.4] text-[#5f4b42] mt-4 font-['Fraunces']" data-en="Proactive means present, not pushy. A companion dims its own light." data-zh="主动意味着在场，而不是冒进。好的伙伴会收敛自己的光芒。">
+              Proactive means present, not pushy. A companion dims its own light.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="design" class="py-20 sm:py-28 lg:py-32">
+      <div class="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <img alt="Frame detail" id="design-image" class="w-full aspect-square object-cover grayscale hover:grayscale-0 transition-all duration-700 shadow-soft cursor-pointer" src="./assets/screen-reference.png" />
+          <div class="space-y-10">
+            <div class="space-y-4">
+              <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-primary font-medium" data-en="Interior system" data-zh="内部系统">Interior system</p>
+              <h2 class="font-headline text-[34px] sm:text-[46px] leading-[1.02] font-bold tracking-tight" data-en="The Architecture of Insight" data-zh="洞察力的架构">The Architecture of Insight</h2>
+              <p class="text-[14px] leading-relaxed text-muted max-w-[560px]" data-en="The interior frame houses the Neural-P1 processor, dedicated to real-time spatial mapping. Every component is laser-welded for structural integrity." data-zh="内部框架搭载Neural-P1处理器，专用于实时空间映射。每个组件均采用激光焊接，确保结构完整性。">
+                The interior frame houses the Neural-P1 processor, dedicated to real-time spatial mapping. Every component is laser-welded for structural integrity.
+              </p>
+            </div>
+            <div class="space-y-7 font-mono" id="feature-list">
+              <div class="feature-item flex gap-5 cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1" data-index="0">
+                <span class="text-[10px] text-primary mt-[3px] transition-all duration-300">01</span>
+                <div>
+                  <h4 class="feature-title uppercase text-[12px] font-semibold tracking-[0.08em] text-primary transition-all duration-300" data-en="Spatial Audio Array" data-zh="空间音频阵列">Spatial Audio Array</h4>
+                  <p class="feature-desc mt-1 text-[10px] text-[#66697a] transition-all duration-300" data-en="Six directional microphones for localized sound isolation." data-zh="六个定向麦克风，实现局部声音隔离。">Six directional microphones for localized sound isolation.</p>
+                </div>
+              </div>
+              <div class="feature-item flex gap-5 cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1" data-index="1">
+                <span class="text-[10px] text-primary mt-[3px] transition-all duration-300">02</span>
+                <div>
+                  <h4 class="feature-title uppercase text-[12px] font-semibold tracking-[0.08em] text-primary transition-all duration-300" data-en="Haptic Feedback" data-zh="触觉反馈">Haptic Feedback</h4>
+                  <p class="feature-desc mt-1 text-[10px] text-[#66697a] transition-all duration-300" data-en="Precision vibration motors for subtle tactile notifications." data-zh="精密振动马达，提供微妙的触觉通知。">Precision vibration motors for subtle tactile notifications.</p>
+                </div>
+              </div>
+              <div class="feature-item flex gap-5 cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1" data-index="2">
+                <span class="text-[10px] text-primary mt-[3px] transition-all duration-300">03</span>
+                <div>
+                  <h4 class="feature-title uppercase text-[12px] font-semibold tracking-[0.08em] text-primary transition-all duration-300" data-en="Liquid Optics" data-zh="液态光学">Liquid Optics</h4>
+                  <p class="feature-desc mt-1 text-[10px] text-[#66697a] transition-all duration-300" data-en="Auto-adjusting prescription lenses for perfect visual alignment." data-zh="自动调节处方镜片，实现完美的视觉对齐。">Auto-adjusting prescription lenses for perfect visual alignment.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-20 sm:py-28 lg:py-36 text-center">
+      <div class="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12">
+        <h2 class="font-headline font-bold tracking-[-0.04em] text-[46px] sm:text-[72px] lg:text-[100px]" data-en="RECLAIM REALITY." data-zh="重拾现实。">RECLAIM REALITY.</h2>
+        <p class="mt-7 font-mono text-[10px] tracking-[0.3em] uppercase text-[#868999]" data-en="Production units shipping Q4 2024" data-zh="生产批次将于2024年第四季度发货">Production units shipping Q4 2024</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-10 border-t border-[#5c5cc11a]">
+    <div class="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-6 font-mono text-[10px] uppercase tracking-[0.16em] text-[#17181cb5]">
+        <div class="flex items-center gap-6">
+        <a href="#" class="hover:text-primary transition-colors" data-en="Specifications" data-zh="规格">Specifications</a>
+        <a href="#" class="hover:text-primary transition-colors" data-en="Privacy" data-zh="隐私">Privacy</a>
+        <a href="#" class="hover:text-primary transition-colors" data-en="Terms" data-zh="条款">Terms</a>
+        <a href="#" class="hover:text-primary transition-colors" data-en="Support" data-zh="支持">Support</a>
+      </div>
+      <p data-en="© 2024 Aether Technical Systems" data-zh="© 2024 Aether技术系统">© 2024 Aether Technical Systems</p>
+    </div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById("cursor");
+    const mouse = { x: 0, y: 0 };
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+
+    document.addEventListener("mousemove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      if (isDesktop && cursor) {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+      }
+    });
+
+    const canvas = document.getElementById("matrix-canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const GLASSES_SVG = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDgwMCA0MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE1MCAxMDBoNTAwdjIwMEgxNTB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE4MCAxNjBjLTUwIDAtODAgMzAtODAgODBzNDAgODAgODAgODAgODAtMzAgODAtODAtNDAtODAtODAtODBtNDQwIDBjLTUwIDAtODAgMzAtODAgODBzNDAgODAgODAgODAgODAtMzAgODAtODAtNDAtODAtODAtODBtLTMyNCAyNWMzMCAwIDEyMCA4NSAxODQgODUgNzAgMCAxNjAtODUgMTg0LTg1IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjI1Ii8+PHBhdGggZD0iTTE4MCAxNDBDMTEwIDE0MCA2MCAxODAgNjAgMjQwYzAgNjcgNTYgMTIyIDEyNiAxMjIgMTQwIDAgMTU3LTY1IDE3OS04MSAyNSAxNyAyOCA4MSA0NDkgODEgNzAgMCAxMjYtNTUgMTI2LTEyMnMtNTAtMTAwLTExNC0xMDBIMjU0IiBmaWxsPSJibGFjayIvPjwvc3ZnPg==";
+    const maskImg = new Image();
+    maskImg.src = GLASSES_SVG;
+
+    let particles = [];
+    const spacing = 10;
+    const particleRadius = 1.3;
+    const repulsionRadius = 120;
+    const damping = 0.9;
+    const tension = 0.03;
+    const maskCanvas = document.createElement("canvas");
+    const mctx = maskCanvas.getContext("2d");
+    let maskData = null;
+
+    function getAlphaAt(x, y) {
+      if (!maskData) return 0;
+      const ix = Math.floor(x);
+      const iy = Math.floor(y);
+      if (ix < 0 || iy < 0 || ix >= maskCanvas.width || iy >= maskCanvas.height) return 0;
+      return maskData[(iy * maskCanvas.width + ix) * 4 + 3];
+    }
+
+    function updateMask() {
+      maskCanvas.width = canvas.width;
+      maskCanvas.height = canvas.height;
+      mctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      if (!maskImg.complete) return;
+      const maskW = Math.min(canvas.width * 0.9, 1200);
+      const maskH = maskW * 0.5;
+      const drawX = (canvas.width - maskW) / 2;
+      const drawY = canvas.height * 0.45 - maskH / 2;
+      mctx.drawImage(maskImg, drawX, drawY, maskW, maskH);
+      maskData = mctx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
+    }
+
+    function initParticles() {
+      particles = [];
+      const cols = Math.floor(canvas.width / spacing);
+      const rows = Math.floor(canvas.height / spacing);
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const ox = i * spacing;
+          const oy = j * spacing;
+          particles.push({ ox, oy, x: ox, y: oy, vx: 0, vy: 0, alpha: 0.17 });
+        }
+      }
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      updateMask();
+      initParticles();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < repulsionRadius) {
+          const angle = Math.atan2(dy, dx);
+          const force = (repulsionRadius - dist) / repulsionRadius;
+          p.vx += Math.cos(angle) * force * 5;
+          p.vy += Math.sin(angle) * force * 5;
+        }
+        p.vx = (p.vx + (p.ox - p.x) * tension) * damping;
+        p.vy = (p.vy + (p.oy - p.y) * tension) * damping;
+        p.x += p.vx;
+        p.y += p.vy;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, particleRadius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(96,100,128,${p.alpha})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(animate);
+    }
+
+    // Keep hero wordmark static; no cursor-driven wobble.
+
+    const contactBtn = document.getElementById("contact-btn");
+    const qrPopup = document.getElementById("qr-popup");
+    let progressTimer;
+    if (contactBtn && qrPopup) {
+      contactBtn.addEventListener("mouseenter", () => {
+        qrPopup.style.display = "none";
+        clearTimeout(progressTimer);
+        progressTimer = setTimeout(() => { qrPopup.style.display = "block"; }, 800);
+      });
+      contactBtn.addEventListener("mouseleave", () => {
+        clearTimeout(progressTimer);
+        qrPopup.style.display = "none";
+      });
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.querySelector(".tech-card")?.classList.add("animate-card-rise");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll(".tech-card-container").forEach((node) => observer.observe(node));
+
+    const langToggle = document.getElementById("lang-toggle");
+    if (langToggle) {
+      langToggle.addEventListener("change", (e) => {
+        const isChinese = e.target.checked;
+        document.querySelectorAll("[data-en][data-zh]").forEach((el) => {
+          el.textContent = isChinese ? el.getAttribute("data-zh") : el.getAttribute("data-en");
+        });
+        // Toggle Chinese font class for all text elements
+        document.body.classList.toggle('chinese-font', isChinese);
+      });
+    }
+
+    // Fullscreen loader - remove after all resources loaded
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('fullscreen-loader');
+      if (loader) {
+        setTimeout(() => {
+          loader.classList.add('fade-out');
+          setTimeout(() => loader.remove(), 800);
+        }, 500);
+      }
+    });
+
+    // Design section image swap on hover
+    const designImage = document.getElementById('design-image');
+    if (designImage) {
+      // Define 5 images: 0=default, 1-3=feature items, 4=image hover
+      const imageSources = [
+        './assets/screen-reference.png',      // 0: default
+        './assets/logo-main-cutout.png',        // 1: Spatial Audio Array
+        './assets/logo-main-cutout-v2.png',     // 2: Haptic Feedback
+        './assets/logo-main-cutout-v4.png',     // 3: Liquid Optics
+        './assets/logo-mark.png'                // 4: image hover
+      ];
+
+      // Default image
+      designImage.src = imageSources[0];
+
+      // Image hover effect
+      designImage.addEventListener('mouseenter', () => {
+        designImage.src = imageSources[4];
+      });
+
+      designImage.addEventListener('mouseleave', () => {
+        designImage.src = imageSources[0];
+      });
+
+      // Feature items hover - specific images
+      const featureItems = document.querySelectorAll('.feature-item');
+      featureItems.forEach((item, index) => {
+        item.addEventListener('mouseenter', () => {
+          const imgIndex = parseInt(item.dataset.index);
+          if (imgIndex >= 0 && imgIndex <= 2) {
+            designImage.src = imageSources[imgIndex + 1];
+          }
+        });
+        item.addEventListener('mouseleave', () => {
+          designImage.src = imageSources[0];
+        });
+      });
+    }
+
+    document.querySelectorAll("button, a, .tracker-grid").forEach((el) => {
+      el.addEventListener("mouseenter", () => {
+        if (!isDesktop || !cursor) return;
+        cursor.style.transform = "translate(-50%, -50%) scale(2.4)";
+        cursor.style.backgroundColor = "rgba(184, 92, 60, 0.08)";
+      });
+      el.addEventListener("mouseleave", () => {
+        if (!isDesktop || !cursor) return;
+        cursor.style.transform = "translate(-50%, -50%) scale(1)";
+        cursor.style.backgroundColor = "transparent";
+      });
+    });
+
+    window.addEventListener("resize", resizeCanvas);
+    maskImg.onload = () => {
+      resizeCanvas();
+      animate();
+    };
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    try {
+      console.log('[3D] Module script starting...');
+      console.log('[3D] Three.js imported successfully');
+
+      const container = document.getElementById('glasses-3d-container');
+    const loadingEl = container?.querySelector('.glasses-loading');
+    const errorEl = document.getElementById('glasses-error');
+
+    if (!container) {
+      throw new Error('3D container not found: glasses-3d-container element is missing');
+    }
+
+    // Scene setup
+    const scene = new THREE.Scene();
+
+    // Camera - positioned further back to capture full glasses rotation
+    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 4);
+
+    // Renderer with transparent background
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0xfaf6f0, 0); // transparent background
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    mainLight.position.set(2, 2, 2);
+    scene.add(mainLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    fillLight.position.set(-2, 1, 1);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    rimLight.position.set(0, 1, -2);
+    scene.add(rimLight);
+
+    // State
+    let glassesModel = null;
+    let isIntroComplete = false;
+    let introStartTime = null;
+
+    console.log('[3D] Starting GLB load...');
+
+    // Load model
+    const loader = new GLTFLoader();
+    loader.load(
+      './ImageToStl.com_GLASSES_34.glb',
+      (gltf) => {
+        console.log('[3D] GLB loaded successfully');
+        glassesModel = gltf.scene;
+
+        // Force all materials to black
+        glassesModel.traverse((child) => {
+          if (child.isMesh) {
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach((mat) => {
+                  if (mat.color) mat.color.setHex(0x1a1a1a);
+                  mat.needsUpdate = true;
+                });
+              } else {
+                if (child.material.color) child.material.color.setHex(0x1a1a1a);
+                child.material.needsUpdate = true;
+              }
+            }
+          }
+        });
+
+        // Center and scale
+        const box = new THREE.Box3().setFromObject(glassesModel);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 1.2 / maxDim;
+        glassesModel.scale.setScalar(scale);
+
+        box.setFromObject(glassesModel);
+        const center = box.getCenter(new THREE.Vector3());
+        glassesModel.position.sub(center);
+
+        // Set initial position (off-screen left and bottom)
+        glassesModel.position.x = -2.5;
+        glassesModel.position.y = -1.5;
+
+        scene.add(glassesModel);
+        console.log('[3D] Model added to scene');
+
+        // Hide loading
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        // Start intro
+        introStartTime = performance.now();
+        animateIntro();
+      },
+      (xhr) => {
+        const percent = xhr.total ? Math.round((xhr.loaded / xhr.total) * 100) : 0;
+        console.log('[3D] Loading:', percent + '%');
+        if (loadingEl) loadingEl.textContent = 'Loading 3D Model... ' + percent + '%';
+      },
+      (error) => {
+        console.error('[3D] Error loading GLB:', error);
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (errorEl) {
+          errorEl.style.display = 'flex';
+          errorEl.innerHTML = 'Failed to load 3D model.<br>Check console (F12) for details.';
+        }
+      }
+    );
+
+    // Intro animation - from bottom-left to final position
+    function animateIntro() {
+      if (!glassesModel || !introStartTime) {
+        requestAnimationFrame(animateIntro);
+        return;
+      }
+
+      const elapsed = (performance.now() - introStartTime) / 1000;
+      const delay = 0.3; // shorter delay after loading
+      const duration = 2.5; // slightly longer for dramatic effect
+
+      if (elapsed < delay) {
+        renderer.render(scene, camera);
+        requestAnimationFrame(animateIntro);
+        return;
+      }
+
+      const animTime = elapsed - delay;
+      const progress = Math.min(animTime / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      // Start from closer bottom-left to stay within visible bounds
+      // End at center (0, 0)
+      const startX = -2.5;
+      const startY = -1.5;
+      const endX = 0;
+      const endY = 0;
+
+      glassesModel.position.x = startX + (endX - startX) * eased;
+      glassesModel.position.y = startY + (endY - startY) * eased;
+
+      // Continuous rotation during movement
+      glassesModel.rotation.y = eased * Math.PI * 1.5;
+      glassesModel.rotation.z = eased * 0.2;
+
+      renderer.render(scene, camera);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateIntro);
+      } else {
+        isIntroComplete = true;
+        console.log('[3D] Intro complete');
+
+        // Show hero elements after glasses arrive
+        showHeroElements();
+
+        animateLoop();
+      }
+    }
+
+    // Mouse tracking - only rotate when cursor is very close to glasses
+    const threeMouse = { x: 0, y: 0, active: false };
+    const PROXIMITY_THRESHOLD = 350; // pixels - larger area for smoother interaction
+
+    document.addEventListener('mousemove', (e) => {
+      if (!container) return;
+
+      // Get 3D container center position
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      // Calculate distance from mouse to container center
+      const dx = e.clientX - centerX;
+      const dy = e.clientY - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Only activate rotation when cursor is very close
+      threeMouse.active = distance < PROXIMITY_THRESHOLD;
+
+      if (threeMouse.active) {
+        // Map position within proximity to rotation (-1 to 1)
+        threeMouse.x = (dx / PROXIMITY_THRESHOLD) * 0.5;
+        threeMouse.y = (dy / PROXIMITY_THRESHOLD) * 0.5;
+      }
+    });
+
+    // Show hero elements function
+    function showHeroElements() {
+      const heroWordmark = document.querySelector('.hero-wordmark');
+      const heroFlash = document.querySelector('.hero-wordmark-flash');
+      const heroText = document.querySelector('.hero-italic-text');
+
+      if (heroWordmark) heroWordmark.classList.add('visible');
+      if (heroFlash) heroFlash.classList.add('visible');
+      if (heroText) heroText.classList.add('visible');
+    }
+
+    // Main animation loop
+    function animateLoop() {
+      requestAnimationFrame(animateLoop);
+
+      if (!glassesModel) return;
+
+      if (isIntroComplete) {
+        // Only rotate when mouse is close to glasses
+        if (threeMouse.active) {
+          // Larger rotation angle (2.0 for more visible movement)
+          const targetX = threeMouse.y * 2.0;
+          const targetY = threeMouse.x * 2.0;
+
+          glassesModel.rotation.x += (targetX - glassesModel.rotation.x) * 0.08;
+          glassesModel.rotation.y += (targetY - glassesModel.rotation.y) * 0.08;
+        } else {
+          // Return to neutral position when mouse is far
+          glassesModel.rotation.x += (0 - glassesModel.rotation.x) * 0.03;
+          glassesModel.rotation.y += (0 - glassesModel.rotation.y) * 0.03;
+        }
+
+        // Constant slow rotation
+        glassesModel.rotation.y += 0.002;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Initial render
+    renderer.render(scene, camera);
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    } catch (err) {
+      console.error('[3D] Fatal error:', err);
+      const errorEl = document.getElementById('glasses-error');
+      const loadingEl = document.querySelector('.glasses-loading');
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) {
+        errorEl.style.display = 'flex';
+        errorEl.textContent = '3D Error: ' + err.message;
+      }
+      // Re-throw to see in console
+      throw err;
+    }
+  </script>
+</body>
+</html>
